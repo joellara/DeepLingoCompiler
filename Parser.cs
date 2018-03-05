@@ -61,7 +61,7 @@ namespace deepLingo {
         
         public Node DefList(){
             // <Def> *
-            var n1 = Node();
+            var n1 = DefList();
             while (Current != TokenCategory.EOF) {
                 var n2 = new Def();
                 n2.Add(n1);
@@ -91,9 +91,14 @@ namespace deepLingo {
         }
         public Node ParamList(){
             //<‹id-list› >?
+            
+            if(){
+                
+            }
         }
         public Node VarDefList(){
             //‹var-list›
+            return new VarList()
         }
         public Node StmtList(){
             //‹stmt›*
@@ -108,20 +113,13 @@ namespace deepLingo {
         }
         public Node FunCall(){
             // ‹id› ( ‹expr-list› )
-        }
-        public Node ExprList(){
-            //< ‹expr› ‹expr-list-cont› >?
-            //steve help
-        }
-        public Node ExprListCont(){
-            //,‹expr› *
-            var n = new ExprListCont()
-            while(Current == TokenCategory.COMA){
-                Expect(TokenCategory.COMA);
-                    n.Add(Expr());
-            }
+            Expect(TokenCategory.ID);
+            Expect(TokenCategory.OPENEDPAR);
+            var n = ExprList();
+            Expect(TokenCategory.CLOSEDPAR);
             return n;
         }
+
         public Node Else(){
             //< else{‹stmt-list›} >?
             var n = new Else();
@@ -133,6 +131,7 @@ namespace deepLingo {
             }
             return n;
         }
+        
         public Node ElseIfList(){
             //elseif(‹expr›){‹stmt-list›} *
             var n = new ElseIfList();
@@ -147,200 +146,172 @@ namespace deepLingo {
             }
             return n;
         }
-        public Node Expr(){ //‹expr-or›
-            var n = new Expr(){
-                ExprOr();
+        
+        public Node ExprList(){ //Borre ExprListCont //(‹expr› (,‹expr›)*)?
+            var n = new ExprListCont()
+            while(Current == TokenCategory.COMA){
+                Expect(TokenCategory.COMA);
+                n.Add(Expr());
             }
             return n;
         }
-        public Node ExprOr(){ //‹expr-and› < || ‹expr-and› >*
-            var n = new ExprOr(){
-                ExprAnd();
+        
+        public Node Expr(){ //ExprOr  --> ‹expr-and› < || ‹expr-and› >*
+            var n1 = ExprAnd();
+            while(Current = TokenCategory.OR){
+                n2 = new Expr();
+                n2.AnchorToken = Expect(TokenCategory.OR)
+                n2.Add(n1);
+                n2.Add(ExprAnd());
+                n1 = n2;
             }
-            while(Current == TokenCategory.OR){
-                Expect(TokenCategory.OR);
-                n.Add(ExprAnd());
-            }
-            return n;
+            return n1;
         }
         
         public Node ExprAnd(){//‹expr-comp› < &&‹expr-comp› >*
-            var n = new ExprAnd(){
-                ExprComp()
+            var n1 = ExprComp();
+            while(Current = TokenCategory.AND){
+                n2 = new ExprAnd();
+                n2.AnchorToken = Expect(TokenCategory.AND)
+                n2.Add(n1);
+                n2.Add(ExprComp());
+                n1 = n2;
             }
-            while(Current == TokenCategory.AND){
-                Expect(TokenCategory.AND);
-                n.Add(ExprComp());
-            }
-            return n;
+            return n1;
         }
+        
         public Node ExprComp(){
             //‹expr-rel›  <‹op-comp› ‹expr-rel›>*
-            var n = new ExprComp(){
-                ExprRel()
+            var n1 = ExprRel();
+            while(Current = TokenCategory.NOTEQUALS || Current = TokenCategory.EQUALS){
+                n2 = new ExprComp();
+                switch(Current){
+                    case TokenCategory.EQUALS:
+                        n2.AnchorToken = Expect(TokenCategory.EQUALS);
+                        break;
+                    case TokenCategory.LESSEQUAL:
+                        n2.AnchorToken = Expect(TokenCategory.LESSEQUAL);
+                        break;
+                    default:
+                        throw new SyntaxError(category, tokenStream.Current);
+                }
+                n2.Add(n1);
+                n2.Add(ExprRel());
+                n1 = n2
             }
-            while(Current == TokenCategory.NOTEQUALS || Current == TokenCategory.EQUALS){
-                n.Add(OpComp);
-                n.Add(ExprRel);
-            }
-            return n;
+            return n1;
         }
-        
-        public Node OpComp(){//!= | ==
-            switch(Current){
-                case TokenCategory.NOTEQUALS:
-                    var n = OpComp(){
-                        Expect(TokenCategory.NOTEQUALS);
-                    }
-                    return n;
-                case TokenCategory.EQUALS:
-                    var n = OpComp(){
-                        Expect(TokenCategory.EQUALS);
-                    }
-                    return n;
-                default: 
-                    throw new SyntaxError(category, tokenStream.Current);
-            }
-        }
+
         public Node ExprRel(){
             //‹expr-add› <‹op-rel› ‹expr-add›>*
-            var n = new ExprRel(){
-                ExprAdd()
-            }
+            var n1 = ExprAdd();
             while(Current = TokenCategory.LESS || Current = TokenCategory.LESSEQUAL || Current = TokenCategory.GREATER || Current = TokenCategory.GREATEREQUAL){
-                n.Add(OpRel());
-                n.Add(ExprAdd());
+                n2 = new ExprRel();
+                switch(Current){
+                    case TokenCategory.LESS:
+                        n2.AnchorToken = Expect(TokenCategory.LESS);
+                        break;
+                    case TokenCategory.LESSEQUAL:
+                        n2.AnchorToken = Expect(TokenCategory.LESSEQUAL);
+                        break;
+                    case TokenCategory.GREATER:
+                        n2.AnchorToken = Expect(TokenCategory.GREATER);
+                        break;
+                    case TokenCategory.GREATEREQUAL:
+                        n2.AnchorToken = Expect(TokenCategory.GREATEREQUAL);
+                        break;
+                    default:
+                        throw new SyntaxError(category, tokenStream.Current);
+                }
+                n2.Add(n1);
+                n2.Add(ExprAdd());
+                n1 = n2
             }
-            return n;
+            return n1;
+            
         }
-        public Node OpRel(){// < | <= | > | >=
-            switch(Current){
-                case TokenCategory.LESS:
-                    var n = OpRel(){
-                        Expect(TokenCategory.LESS);
-                    }
-                    return n;
-                case TokenCategory.LESSEQUAL:
-                    var n = OpRel(){
-                        Expect(TokenCategory.LESSEQUAL);
-                    }
-                    return n;
-                case TokenCategory.GREATER:
-                    var n = OpRel(){
-                        Expect(TokenCategory.GREATER);
-                    }
-                    return n;
-                case TokenCategory.GREATEREQUAL:
-                    var n = OpRel(){
-                        Expect(TokenCategory.GREATEREQUAL);
-                    }
-                    return n;
-                default: 
-                    throw new SyntaxError(category, tokenStream.Current);
-            }
-        }
-        
+
         public Node ExprAdd(){
             //‹expr-mul› < ‹op-add› ‹expr-mul› >*
-            var n = new ExprAdd(){
-                ExprMul()
-            }
+            var n1 = ExprMul();
             while(Current == TokenCategory.MINUS || Current == TokenCategory.PLUS){
-                n.Add(OpAdd());
-                n.Add(ExprMul());
+                n2 = new ExprMul();
+                switch(Current){
+                    case TokenCategory.MINUS:
+                        n2.AnchorToken = Expect(TokenCategory.MINUS);
+                        break;
+                    case TokenCategory.PLUS:
+                        n2.AnchorToken = Expect(TokenCategory.PLUS);
+                        break;
+                    default:
+                        throw new SyntaxError(category, tokenStream.Current);
+                }
+                n2.Add(n1);
+                n2.Add(ExprMul());
+                n1 = n2
             }
-            return n;
+            return n1;
         }
-        
-        public Node OpAdd(){//− | +
-            switch(Current){
-                case TokenCategory.MINUS:
-                    var n = OpAdd(){
-                        Expect(TokenCategory.MINUS);
-                    }
-                    return n;
-                case TokenCategory.PLUS:
-                    var n = OpAdd(){
-                        Expect(TokenCategory.PLUS);
-                    }
-                    return n;
-                default: 
-                    throw new SyntaxError(category, tokenStream.Current);
-            }
-        }
-        
+
         public Node ExprMul(){ //‹expr-unary› < ‹op-mul› ‹expr-unary› >*
-            var n = new ExprMul(){
-                ExprUnary()
-            }
+            var n1 = ExprUnary();
             while(Current == TokenCategory.MULTIPLICATION || Current == TokenCategory.DIVIDE || Current == TokenCategory.MODULO){
-                n.Add(OpUnary());
-                n.Add(ExprUnary());
+                n2 = new ExprMul();
+                switch(Current){
+                    case TokenCategory.MULTIPLICATION:
+                        n2.AnchorToken = Expect(TokenCategory.MULTIPLICATION);
+                        break;
+                    case TokenCategory.DIVIDE:
+                        n2.AnchorToken = Expect(TokenCategory.DIVIDE);
+                        break;
+                    case TokenCategory.MODULO:
+                        n2.AnchorToken = Expect(TokenCategory.MODULO);
+                        break;
+                    default:
+                        throw new SyntaxError(category, tokenStream.Current);
+                }
+                n2.Add(n1);
+                n2.Add(ExprUnary());
+                n1 = n2
             }
-            return n;
+            return n1;
         }
-        
-        public Node OpMul(){//* | / | %
-            switch(Current){
-                case TokenCategory.MULTIPLICATION:
-                    var n = OpMul(){
-                        Expect(TokenCategory.MULTIPLICATION)    
-                    }
-                    return n;
-                case TokenCategory.DIVIDE:
-                    var n = OpMul(){
-                        Expect(TokenCategory.DIVIDE)    
-                    }
-                    return n;
-                case TokenCategory.MODULO:
-                    var n = OpMul(){
-                        Expect(TokenCategory.MODULO)    
-                    }
-                    return n;
-                default:
-                    throw new SyntaxError(category, tokenStream.Current);
-            }
-        }
-        
+
+        //TODO Check-Unary
         public Node ExprUnary(){
             //< ‹op-unary› >* ‹expr-primary›
-            var n = ExprUnary();
-            while(Current = TokenCategory.MINUS || Current = TokenCategory.PLUS || Current = TokenCategory.NOT){
-                n.Add(OpUnary());
+            var top = new ExprUnary();
+            var temp = top; //reference _magic_ 
+            while(Current = TokenCategory.MINUS || Current = TokenCategory.PLUS || Current = TokenCategory.NOT){ 
+                switch(Current){
+                    case TokenCategory.MINUS:
+                        temp.AnchorToken = Expect(TokenCategory.MINUS);
+                        break;
+                    case TokenCategory.PLUS:
+                        temp.AnchorToken = Expect(TokenCategory.PLUS);
+                        break;
+                    case TokenCategory.NOT:
+                        temp.AnchorToken = Expect(TokenCategory.NOT);
+                        break;
+                    default:
+                        throw new SyntaxError(category, tokenStream.Current);
+                }
+                var newNode = new ExprUnary(); //ToBeReplacedPrimary or next Unary
+                temp.Add(newNode);
+                temp = newNode;
             }
-            n.Add(ExprPrimary());
-            return n;
+            temp = ExprPrimary(); //replace the invisible current node for the real Primary
+            return top; //Always return the head
         }
-        
-        public Node OpUnary(){ //− | + | !
-            switch(Current){
-                case TokenCategory.MINUS:
-                    var n = OpUnary(){
-                        Expect(TokenCategory.MINUS)    
-                    }
-                    return n;
-                case TokenCategory.PLUS:
-                    var n = OpUnary(){
-                        Expect(TokenCategory.PLUS)    
-                    }
-                    return n;
-                case TokenCategory.NOT:
-                    var n = OpUnary(){
-                        Expect(TokenCategory.NOT)    
-                    }
-                    return n;
-                default:
-                    throw new SyntaxError(category, tokenStream.Current);
-            }
-        }
-        
+
         public Node ExprPrimary(){
             //‹id› | ‹fun-call› | ‹array› | ‹lit› | (‹expr›)
             switch(Current){
                 case TokenCategory.IDENTIFIER:
                     var n = new ExprPrimary(){
-                        Expect(TokenCategory.IDENTIFIER)
+                        AnchorToken = Expect(TokenCategory.IDENTIFIER)
                     }
+                    //TODO Check fun-call
                     if(Current == TokenCategory.OPENEDPAR){
                         Expect(TokenCategory.OPENEDPAR)
                         n.Add(FunCall());
@@ -369,7 +340,7 @@ namespace deepLingo {
         public Node Array(){ //[‹expr-list›]
             Expect(TokenCategory.OPENEDBRACKET);
             var n = new Array(){
-                ExprList()
+                ExprList(); //TODO: Check this
             }
             Expect(TokenCategory.CLOSEDBRACKET);
             return n;
@@ -379,17 +350,17 @@ namespace deepLingo {
             switch(Current){
                 case TokenCategory.INT:
                     var n = new Lit(){
-                        Expect(TokenCategory.INT);            
+                        AnchorToken = Expect(TokenCategory.INT);            
                     }
                     return n;
                 case TokenCategory.CHAR:
                     var n = new Lit(){
-                        Expect(TokenCategory.CHAR);            
+                        AnchorToken =  Expect(TokenCategory.CHAR);            
                     }
                     return n;
                 case TokenCategory.STR:
                     var n = new Lit(){
-                        Expect(TokenCategory.STR);            
+                        AnchorToken =  Expect(TokenCategory.STR);            
                     }
                     return n;
                 default:
@@ -423,13 +394,10 @@ namespace deepLingo {
     public class StmtList: Node{}
     public class Stmt: Node{}
     public class FunCall: Node{}
-    public class Expr: Node{}
-    public class ExprListCont: Node{}
     public class ExprList: Node{}
     public class Else: Node{}
     public class ElseIfList: Node{}
     public class Expr: Node{}
-    public class ExprOr: Node{}
     public class ExprAnd: Node{}
     public class ExprComp: Node{}
     public class OpComp: Node{}
@@ -453,8 +421,7 @@ public class Node: IEnumerable<Node> {
         get {
             return children[index];
         }
-    }
-
+    
     public Token AnchorToken { get; set; }
 
     public void Add(Node node) {
@@ -481,11 +448,11 @@ public class Node: IEnumerable<Node> {
     }
 
     static void TreeTraversal(Node node, string indent, StringBuilder sb) {
-        sb.Append(indent);
-        sb.Append(node);
+            sb.Append(indent);
+            sb.Append(node);
+        }
         sb.Append('\n');
         foreach (var child in node.children) {
             TreeTraversal(child, indent + "  ", sb);
-        }
     }
 }
