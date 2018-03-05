@@ -76,6 +76,10 @@ namespace DeepLingo {
                     Console.WriteLine(String.Format("[{0}] {1}", count++, tok));
                 }
                 
+                var parser = new Parser(new Scanner(input).Start().GetEnumerator());
+                parser.Program();
+                Console.WriteLine("Syntax OK.");
+                
             } catch (FileNotFoundException e) {
                 Console.Error.WriteLine(e.Message);
                 Environment.Exit(1);

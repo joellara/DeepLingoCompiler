@@ -31,7 +31,7 @@ namespace DeepLingo {
         CLOSEDPAR,       // )
         CLOSEDBRACKET,    // ]
         CHAR,      //      'AAA'
-        COMA,           // ,
+        COMMA,           // ,
         DECREMENT,      // --
         NOTEQUALS,      // !=
         DIVIDE,         // /

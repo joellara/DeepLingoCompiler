@@ -39,8 +39,7 @@ main() {
         i++;
     }
     printi(fails);
-    prints(" assertion failure(s) found.")
+    prints(" assertion failure(s) found.");
     println();
     prints(a);
-    "\u123456"
 }

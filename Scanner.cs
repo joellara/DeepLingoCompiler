@@ -52,7 +52,7 @@ namespace DeepLingo {
                 | (?<CLOSEDCURLY>        [}]                                                          )
                 | (?<CLOSEDPAR>          [)]                                                          )
                 | (?<CLOSEDBRACKET>       []]                                                          )
-                | (?<COMA>              [,]                                                          )
+                | (?<COMMA>              [,]                                                          )
                 | (?<DIVIDE>            [/]                                                          )
                 | (?<GREATER>           [>]                                                          )
                 | (?<LESS>              [<]                                                          )
@@ -94,7 +94,7 @@ namespace DeepLingo {
                 {"CLOSEDPAR",     TokenCategory.CLOSEDPAR      },
                 {"CLOSEDBRACKET",  TokenCategory.CLOSEDBRACKET   },
                 {"CHAR",    TokenCategory.CHAR     },
-                {"COMA",         TokenCategory.COMA          },
+                {"COMMA",         TokenCategory.COMMA          },
                 {"DECREMENT",    TokenCategory.DECREMENT     },
                 {"DIVIDE",       TokenCategory.DIVIDE        },
                 {"EQUALS",       TokenCategory.EQUALS        },
