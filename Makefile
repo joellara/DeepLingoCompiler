@@ -20,9 +20,9 @@
 #
 
 deepLingo.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs Parser.cs \
-	SyntaxError.cs Node.cs
+	SyntaxError.cs Node.cs SpecificNodes.cs
 	mcs -out:deepLingo.exe Driver.cs Scanner.cs Token.cs TokenCategory.cs \
-	Parser.cs SyntaxError.cs Node.cs
+	ParserAST.cs SyntaxError.cs Node.cs SpecificNodes.cs
 			
 clean:
 	rm deepLingo.exe

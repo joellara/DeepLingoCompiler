@@ -37,7 +37,7 @@ namespace DeepLingo {
         static readonly Regex regex = new Regex(
             @"                             
                   (?<AND>               [&]{2}                                                       )
-                | (?<CHAR>         '([^\n\\']|\\n|\\r|\\t|\\'|\\\\|\\""|\\u[0-9a-fA-F]{6})'     )
+                | (?<CHAR>              '([^\n\\']|\\n|\\r|\\t|\\'|\\\\|\\""|\\u[0-9a-fA-F]{6})'     )
                 | (?<MULTICOMMENT>      (\/[*][^*]*[*]+([^*/][^*]*[*]+)*\/)|(\/\/.*)                 )
                 | (?<COMMENT>           ([/]{2}.*)                                                   )
                 | (?<DECREMENT>         [-]{2}                                                       )
@@ -46,24 +46,24 @@ namespace DeepLingo {
                 | (?<INCREMENT>         [+]{2}                                                       )
                 | (?<LESSEQUAL>         [<][=]                                                       )
                 | (?<NOTEQUALS>         [!][=]                                                       )
-                | (?<OR>                [|]{2}                                                      )
-                | (?<STRING>            ""([^\n\\""]|\\n|\\r|\\t|\\'|\\\\|\\""|\\u[0-9a-fA-F]{6})*"")
+                | (?<OR>                [|]{2}                                                       )
+                | (?<STRING>            ""([^\n\\""]|\\n|\\r|\\t|\\'|\\\\|\\""|\\u[0-9a-fA-F]{6})*"" )
                 | (?<ASSIGN>            [=]                                                          )
-                | (?<CLOSEDCURLY>        [}]                                                          )
-                | (?<CLOSEDPAR>          [)]                                                          )
-                | (?<CLOSEDBRACKET>       []]                                                          )
-                | (?<COMMA>              [,]                                                          )
+                | (?<CLOSEDCURLY>       [}]                                                          )
+                | (?<CLOSEDPAR>         [)]                                                          )
+                | (?<CLOSEDBRACKET>     []]                                                          )
+                | (?<COMMA>             [,]                                                          )
                 | (?<DIVIDE>            [/]                                                          )
                 | (?<GREATER>           [>]                                                          )
                 | (?<LESS>              [<]                                                          )
                 | (?<MINUS>             [-]                                                          )
                 | (?<MODULO>            [%]                                                          )
-                | (?<MULTIPLICATION>      [*]                                                          )
+                | (?<MULTIPLICATION>    [*]                                                          )
                 | (?<NOT>               [!]                                                          )
                 | (?<PLUS>              [+]                                                          )
-                | (?<OPENEDPAR>           [(]                                                          )
-                | (?<OPENEDCURLY>         [{]                                                          )
-                | (?<OPENEDBRACKET>        [[]                                                          )
+                | (?<OPENEDPAR>         [(]                                                          )
+                | (?<OPENEDCURLY>       [{]                                                          )
+                | (?<OPENEDBRACKET>     [[]                                                          )
                 | (?<SEMICOLON>         [;]                                                          )
                 | (?<IDENTIFIER>        [A-Za-z][0-9A-Za-z_]*                                        )
                 | (?<INTLITERAL>        [-]?\d+                                                      )
@@ -88,36 +88,36 @@ namespace DeepLingo {
 
         static readonly IDictionary<string, TokenCategory> nonKeywords =
             new Dictionary<string, TokenCategory>() {
-                {"AND",          TokenCategory.AND           },
-                {"ASSIGN",       TokenCategory.ASSIGN        },
-                {"CLOSEDCURLY",   TokenCategory.CLOSEDCURLY    },
-                {"CLOSEDPAR",     TokenCategory.CLOSEDPAR      },
-                {"CLOSEDBRACKET",  TokenCategory.CLOSEDBRACKET   },
-                {"CHAR",    TokenCategory.CHAR     },
-                {"COMMA",         TokenCategory.COMMA          },
-                {"DECREMENT",    TokenCategory.DECREMENT     },
-                {"DIVIDE",       TokenCategory.DIVIDE        },
-                {"EQUALS",       TokenCategory.EQUALS        },
-                {"GREATER",      TokenCategory.GREATER       },
-                {"GREATEREQUAL", TokenCategory.GREATEREQUAL  },
-                {"INCREMENT",    TokenCategory.INCREMENT     },
-                {"INTLITERAL",   TokenCategory.INTLITERAL    },
-                {"LESS",         TokenCategory.LESS          },
-                {"LESSEQUAL",    TokenCategory.LESSEQUAL     },
-                {"MINUS",        TokenCategory.MINUS         },
-                {"MODULO",       TokenCategory.MODULO        },
-                {"MULTIPLICATION", TokenCategory.MULTIPLICATION  },
-                {"NEGATION",     TokenCategory.NEGATION      },
-                {"NOT",          TokenCategory.NOT           },
-                {"NOTEQUALS",    TokenCategory.NOTEQUALS     },
-                {"OPENEDPAR",      TokenCategory.OPENEDPAR       },
-                {"OPENEDCURLY",    TokenCategory.OPENEDCURLY     },
-                {"OPENEDBRACKET",   TokenCategory.OPENEDBRACKET    },
-                {"OR",           TokenCategory.OR            },
-                {"PLUS",         TokenCategory.PLUS          },
-                {"SAME",         TokenCategory.SAME          },
-                {"SEMICOLON",    TokenCategory.SEMICOLON     },
-                {"STRING",       TokenCategory.STRING     },
+                {"AND",             TokenCategory.AND           },
+                {"ASSIGN",          TokenCategory.ASSIGN        },
+                {"CLOSEDCURLY",     TokenCategory.CLOSEDCURLY   },
+                {"CLOSEDPAR",       TokenCategory.CLOSEDPAR     },
+                {"CLOSEDBRACKET",   TokenCategory.CLOSEDBRACKET },
+                {"CHAR",            TokenCategory.CHAR          },
+                {"COMMA",           TokenCategory.COMMA         },
+                {"DECREMENT",       TokenCategory.DECREMENT     },
+                {"DIVIDE",          TokenCategory.DIVIDE        },
+                {"EQUALS",          TokenCategory.EQUALS        },
+                {"GREATER",         TokenCategory.GREATER       },
+                {"GREATEREQUAL",    TokenCategory.GREATEREQUAL  },
+                {"INCREMENT",       TokenCategory.INCREMENT     },
+                {"INTLITERAL",      TokenCategory.INTLITERAL    },
+                {"LESS",            TokenCategory.LESS          },
+                {"LESSEQUAL",       TokenCategory.LESSEQUAL     },
+                {"MINUS",           TokenCategory.MINUS         },
+                {"MODULO",          TokenCategory.MODULO        },
+                {"MULTIPLICATION",  TokenCategory.MULTIPLICATION},
+                {"NEGATION",        TokenCategory.NEGATION      },
+                {"NOT",             TokenCategory.NOT           },
+                {"NOTEQUALS",       TokenCategory.NOTEQUALS     },
+                {"OPENEDPAR",       TokenCategory.OPENEDPAR     },
+                {"OPENEDCURLY",     TokenCategory.OPENEDCURLY   },
+                {"OPENEDBRACKET",   TokenCategory.OPENEDBRACKET },
+                {"OR",              TokenCategory.OR            },
+                {"PLUS",            TokenCategory.PLUS          },
+                {"SAME",            TokenCategory.SAME          },
+                {"SEMICOLON",       TokenCategory.SEMICOLON     },
+                {"STRING",          TokenCategory.STRING        },
             };
 
         public Scanner(string input) {

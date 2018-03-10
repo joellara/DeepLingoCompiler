@@ -12,6 +12,6 @@
 main() {
     prints("The answer to the ultimate question of life, ");
     prints("the universe, and everything: ");
-    printi(!0);
+    printi(!0,2);
     println();
 }

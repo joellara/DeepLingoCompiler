@@ -1,4 +1,4 @@
-DeepLingo compiler, version 0.2
+DeepLingo compiler, version 0.3
 
 Esteban Gil Martinez        A01375048
 Javier Esponda Hernández    A01374645
@@ -15,6 +15,7 @@ Included in this release:
 
     * Lexical analysis
     * Syntactic analysis
+    * AST construction
     
 To build, at the terminal type:
 

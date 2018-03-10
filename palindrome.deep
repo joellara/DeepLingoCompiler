@@ -1,0 +1,46 @@
+/* File: palindrome.deep
+ * Determines if a string is a palindrome.
+ * (C) 2018 Ariel Ortiz, ITESM CEM
+ */
+
+// Returns 42 if str is a palindrome, 0 otherwise.
+is_palindrome(str) {
+    var start, finish;
+    start = 0;
+    finish = size(str) - 1;
+    loop {
+        if (start >= finish) {
+            return 42;
+        }
+        if (get(str, start) != get(str, finish)) {
+            return 0;
+        }
+        start++;
+        finish--;
+    }
+}
+
+main() {
+    var str, option;
+    loop {
+        prints("Input a string: ");
+        str = reads();
+        prints("The string \"");
+        prints(str);
+        prints("\" is ");
+        if (!is_palindrome(str)) {
+            prints("NOT ");
+        }
+        prints("a palindrome.\n");
+        prints("Check another string? ");
+        option = reads();
+        if (size(option) == 0) {
+            option = 'N';
+        } else {
+            option = get(option, 0);
+        }
+        if (option != 'Y' && option != 'y') {
+            break;
+        }
+    }
+}

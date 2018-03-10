@@ -4,18 +4,18 @@
  * (C) 2018 Ariel Ortiz, ITESM CEM
  */
 
-var fails;
+var fails,trues,dues;
 
 assert(value1, value2, message) {
     if (value1 != value2) {
         fails = fails + 1;
-        prints("Assertion failure: ");
+        prints("Assertion failure: ",2,3);
         prints(message);
         println();
     }
 }
 
-main() {
+main(q,t,s) {
     var s, a, i, n;
     fails = 0;
     assert('\n', 10, "error in newline literal");

@@ -1,6 +1,10 @@
 /*
-  Buttercup compiler - Syntax error exception class.
-  Copyright (C) 2013 Ariel Ortiz, ITESM CEM
+  DeepLingo compiler - Syntax error exception class.
+    Esteban Gil Martinez        A01375048
+    Javier Esponda Hernández    A01374645
+    Joel Lara Quintana          A01374649
+
+  Copyright (C) 2018, Error 404 NullPointeException, ITESM CEM
   
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -36,9 +40,7 @@ namespace DeepLingo {
         }
 
         public SyntaxError(ISet<TokenCategory> expectedCategories,Token token):
-            base(String.Format(
-                "Syntax Error: Expecting one of {0}\n" +
-                "but found {1} (\"{2}\") at row {3}, column {4}.",
+            base(String.Format("Syntax Error: Expecting one of {0}\n" +"but found {1} (\"{2}\") at row {3}, column {4}.",
                 Elements(expectedCategories),
                 token.Category,
                 token.Lexeme,

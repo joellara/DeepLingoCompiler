@@ -108,459 +108,444 @@ namespace DeepLingo {
             }
         }
         
-        public void FunCall(){
-            Expect(TokenCategory.IDENTIFIER);
-            Expect(TokenCategory.OPENEDPAR);
-            //var n = ExprList();
-            ExprList();
-            Expect(TokenCategory.CLOSEDPAR);
-            //return n;
-        }
-        
-        public void Program(){ 
+        public Node Program(){ 
             // <def>*
-            //var n = new Program();
-            //var temp = n;
+            var n = new Program();
             while(CurrentToken != TokenCategory.EOF){
-                //var n1 = Def();
-                Def();
-                //temp.add(n1);
-                //temp = n1;
+                if(CurrentToken == TokenCategory.VAR){
+                    n.Add(VarDef());
+                }else{
+                    n.Add(FunDef());
+                }
             }
             Expect(TokenCategory.EOF);
-            //return n;
+            return n;
         }
         
-        public void Def(){
-            //var ‹id-list› ; | ‹fun-def›
-            //var n = new Def();
-            if(CurrentToken == TokenCategory.VAR){
-                //n.Add(VarDef());
-                VarDef();
-            }
-            else{
-                //n.Add(FunDef());
-                FunDef(); 
-            }
-            //return n;
-        }
         
-        public void VarDef(){
-            Expect(TokenCategory.VAR);
-            //var n = new VarDef(){ //Esto no está bien, o no tengo idea
-                IdList();
-            //}
+        public Node VarDef(){
+            var n = new VarDef(){
+                AnchorToken = Expect(TokenCategory.VAR)
+            };
+            n.Add(IdList());
             Expect(TokenCategory.SEMICOLON);
-            //return n;
+            return n;
         }
         
-        public void IdList(){
+        public Node IdList(){
             //‹id› (,‹id›)*
-            //var n = new IdList();
-            //n.Add(Expect(TokenCategory.IDENTIFIER));
-            Expect(TokenCategory.IDENTIFIER);
+            var n = new IdList();
+            n.Add(new Identifier(){
+                AnchorToken = Expect(TokenCategory.IDENTIFIER)
+            });
             while(CurrentToken == TokenCategory.COMMA){
                 Expect(TokenCategory.COMMA);
-                //n.Add(Expect(TokenCategory.IDENTIFIER));
-                Expect(TokenCategory.IDENTIFIER);
+                n.Add(new Identifier(){
+                    AnchorToken = Expect(TokenCategory.IDENTIFIER)
+                });
             }
-            //return n;
+            return n;
         }
         
-        public void FunDef(){
+        public Node FunDef(){
             //‹id›(‹id-list›?){‹var-def›* ‹stmt-list›*}
-            //var n = new FunDef(){AnchorToken = Expect(TokenCategory.IDENTIFIER);}
-            Expect(TokenCategory.IDENTIFIER);
+            var n = new FunDef(){
+                AnchorToken = Expect(TokenCategory.IDENTIFIER)
+            };
             Expect(TokenCategory.OPENEDPAR);
-            //if(Current != TokenCategory.CLOSEDPAR){
-            //    n.Add(IdList());   
-            //}
-            if (CurrentToken == TokenCategory.IDENTIFIER){
-                IdList();
+            if(CurrentToken != TokenCategory.CLOSEDPAR){
+                n.Add(IdList());   
             }
             Expect(TokenCategory.CLOSEDPAR);
             Expect(TokenCategory.OPENEDCURLY);
             while(CurrentToken == TokenCategory.VAR){
-                //n.Add(VarDef());
-                VarDef();
+                n.Add(VarDef());
             }
-            while (firstOfStmt.Contains(CurrentToken)){
-                //n.Add(Stmt());
-                Stmt();
+            if(firstOfStmt.Contains(CurrentToken)){
+                n.Add(StmtList());
             }
             Expect(TokenCategory.CLOSEDCURLY);
+            return n;
         }
         
-        public void ElseIfList(){
+        public Node ElseIf(){
             //elseif(‹expr›){‹stmt-list›} *
-            //var n = new ElseIfList();
+            var n = new ElseIfList();
             while (CurrentToken == TokenCategory.ELSEIF){
+                var n1 = new ElseIf();
                 Expect(TokenCategory.ELSEIF);
                 Expect(TokenCategory.OPENEDPAR);
-                //n.Add(Expr());
-                Expr();
+                n1.Add(Expr());
                 Expect(TokenCategory.CLOSEDPAR);
                 Expect(TokenCategory.OPENEDCURLY);
-                //n.Add(StmtList());
-                while (firstOfStmt.Contains(CurrentToken)){
-                    //n.Add(Stmt());
-                    Stmt();
-                }
+                n1.Add(StmtList());
                 Expect(TokenCategory.CLOSEDCURLY);
+                n.Add(n1);
             }
-            //return n;
+            return n;
         }
         
-        public void Else(){
-            //var n = new Else();
+        public Node Else(){
+            var n = new Else();
             if (CurrentToken == TokenCategory.ELSE){
                 Expect(TokenCategory.ELSE);
                 Expect(TokenCategory.OPENEDCURLY);
-                //n.Add(StmtList());
-                StmtList();
+                if(CurrentToken != TokenCategory.CLOSEDCURLY){
+                    n.Add(StmtList());    
+                }
                 Expect(TokenCategory.CLOSEDCURLY);
             }
-            //return n;
+            return n;
         }
         
-        public void Stmt(){
+        public Node StmtList(){
+            //<stmt>*
+            var n = new StmtList();
+            while (firstOfStmt.Contains(CurrentToken)){
+                n.Add(Stmt());
+            }
+            return n;
+        }
+        
+        public Node If(){
+            var n = new If();
+            Expect(TokenCategory.IF);
+            Expect(TokenCategory.OPENEDPAR);
+            n.Add(Expr());
+            Expect(TokenCategory.CLOSEDPAR);
+            Expect(TokenCategory.OPENEDCURLY);
+            if(CurrentToken != TokenCategory.CLOSEDCURLY){
+                n.Add(StmtList());
+            }
+            Expect(TokenCategory.CLOSEDCURLY);
+            if(CurrentToken == TokenCategory.ELSEIF){
+                n.Add(ElseIf());    
+            }
+            if(CurrentToken == TokenCategory.ELSE){
+                n.Add(Else());
+            }
+            return n;
+        }
+        
+        public Node Loop(){
+            var n  = new Loop(){
+                AnchorToken = Expect(TokenCategory.LOOP)
+            };
+            Expect(TokenCategory.OPENEDCURLY);
+            if(CurrentToken != TokenCategory.CLOSEDCURLY){
+                n.Add(StmtList());   
+            }
+            Expect(TokenCategory.CLOSEDCURLY);
+            return n;
+        }
+        
+        public Node Return(){
+            var n = new Return() {
+                AnchorToken = Expect(TokenCategory.RETURN)
+            };
+            n.Add(Expr());
+            Expect(TokenCategory.SEMICOLON);
+            return n;
+        }
+        
+        public Node Stmt(){
             switch (CurrentToken){
                 case TokenCategory.IDENTIFIER:
-                    Expect(TokenCategory.IDENTIFIER);
+                    var idToken = Expect(TokenCategory.IDENTIFIER);
                     switch (CurrentToken){
                         case TokenCategory.ASSIGN:
                             Expect(TokenCategory.ASSIGN);
-                            //var n = Expr();
-                            Expr();
+                            var ass = new Assignment(){
+                                AnchorToken = idToken
+                            };
+                            ass.Add(Expr());
                             Expect(TokenCategory.SEMICOLON);
-                            //return n;
-                            break;
-        
+                            return ass;
+
                         case TokenCategory.INCREMENT:
                             Expect(TokenCategory.INCREMENT);
+                            //Expect(TokenCategory.INCREMENT);
+                            var inc = new Increment(){
+                                AnchorToken = idToken
+                            };
                             Expect(TokenCategory.SEMICOLON);
-                            break;
-        
+                            return inc;
+
                         case TokenCategory.DECREMENT:
                             Expect(TokenCategory.DECREMENT);
+                            var dec = new Decrement(){
+                                AnchorToken = idToken
+                            };
                             Expect(TokenCategory.SEMICOLON);
-                            break;
-        
+                            return dec;
+                            
                         case TokenCategory.OPENEDPAR:
                             Expect(TokenCategory.OPENEDPAR);
-                            //var n = FunCall();
-                            ExprList();
+                            var fun = new FunCall(){
+                                AnchorToken = idToken
+                            };
+                            if(CurrentToken != TokenCategory.CLOSEDPAR){
+                                fun.Add(ExprList());   
+                            }
                             Expect(TokenCategory.CLOSEDPAR);
                             Expect(TokenCategory.SEMICOLON);
-                            break;
+                            return fun;
                     }
                     break;
                 case TokenCategory.IF:
-                    Expect(TokenCategory.IF);
-                    Expect(TokenCategory.OPENEDPAR);
-                    //var n = Expr();
-                    Expr();
-                    Expect(TokenCategory.CLOSEDPAR);
-                    Expect(TokenCategory.OPENEDCURLY);
-                    //n.Add(StmtList());
-                    StmtList();
-                    Expect(TokenCategory.CLOSEDCURLY);
-                    
-                    //n.Add(ElseIfList());
-                    ElseIfList();
-                    //n.Add(Else());
-                    Else();
-                    //return n;
-                    break;
+                    return If();
 
                 case TokenCategory.LOOP:
-                    Expect(TokenCategory.LOOP);
-                    Expect(TokenCategory.OPENEDCURLY);
-                    //var n = StmtList();
-                    StmtList();
-                    Expect(TokenCategory.CLOSEDCURLY);
-                    //return n;
-                    break;
+                    return Loop();
 
                 case TokenCategory.BREAK:
-                    Expect(TokenCategory.BREAK);
-                    Expect(TokenCategory.SEMICOLON);
-                    break;
+                    return new Stmt(){
+                        AnchorToken = Expect(TokenCategory.BREAK)
+                    };
 
                 case TokenCategory.RETURN:
-                    Expect(TokenCategory.RETURN);
-                    //var n = Expr();
-                    Expr();
-                    Expect(TokenCategory.SEMICOLON);
-                    //return n;
-                    break;
+                    return Return();
 
                 case TokenCategory.SEMICOLON:
-                    Expect(TokenCategory.SEMICOLON);
-                    break;
+                    return new Stmt(){
+                        AnchorToken = Expect(TokenCategory.SEMICOLON)
+                    };
 
                 default:
                     throw new SyntaxError(firstOfStmt,tokenStream.Current);
             }
+            throw new SyntaxError(firstOfStmt,tokenStream.Current);
         }
         
+        public Node ExprList(){
+            var n = new ExprList();
+            n.Add(Expr());
+            while (CurrentToken == TokenCategory.COMMA){
+                Expect(TokenCategory.COMMA);
+                n.Add(Expr());
+            }
+            return n;
+        }
         
-        public void Expr(){
+        public Node Expr(){
             //ExprOr  --> ‹expr-and› < || ‹expr-and› >*
-            //var n1 = ExprAnd();
-            ExprAnd();
+            var n = ExprAnd();
             while(CurrentToken == TokenCategory.OR){
-                //n2 = new Expr();
-                //n2.AnchorToken = Expect(TokenCategory.OR)
-                Expect(TokenCategory.OR);
-                //n2.Add(n1);
-                //n2.Add(ExprAnd());
-                ExprAnd();
-                //n1 = n2;
+                var n1 = new ExprOr(){
+                    AnchorToken = Expect(TokenCategory.OR)
+                };
+                n1.Add(n);
+                n1.Add(ExprAnd());
+                n = n1;
             }
-            //return n1;
+            return n;
         }
         
-        public void ExprAnd(){
-            //var n1 = ExprComp();
-            ExprComp();
+        public Node ExprAnd(){
+            //‹expr-comp› (&& ‹expr-comp›)*
+            var n1 = ExprComp();
             while(CurrentToken == TokenCategory.AND){
-                //n2 = new ExprAnd();
-                //n2.AnchorToken = Expect(TokenCategory.AND)
-                Expect(TokenCategory.AND);
-                //n2.Add(n1);
-                //n2.Add(ExprComp());
-                ExprComp();
-                //n1 = n2;
+                var n2 = new ExprAnd(){
+                    AnchorToken = Expect(TokenCategory.AND)
+                };
+                n2.Add(n1);
+                n2.Add(ExprComp());
+                n1 = n2;
             }
-            //return n1;
+            return n1;
         }
         
-        public void ExprComp(){
-            //‹expr-rel›  <‹op-comp› ‹expr-rel›>*
-            //var n1 = ExprRel();
-            ExprRel();
+        public Node ExprComp(){
+            //‹expr-rel›  (‹op-comp› ‹expr-rel›)*
+            var n1 = ExprRel();
             while(CurrentToken == TokenCategory.EQUALS || CurrentToken == TokenCategory.NOTEQUALS){
-                //n2 = new ExprComp();
+                var n2 = new ExprComp();
                 if(CurrentToken == TokenCategory.EQUALS){
-                    //n2.AnchorToken = Expect(TokenCategory.EQUALS);
-                    Expect(TokenCategory.EQUALS);
+                    n2.AnchorToken = Expect(TokenCategory.EQUALS);
+                }else{
+                    n2.AnchorToken = Expect(TokenCategory.NOTEQUALS);
                 }
-                else{
-                    //n2.AnchorToken = Expect(TokenCategory.LESSEQUAL);
-                    Expect(TokenCategory.NOTEQUALS);
-                }
-                        
-                //n2.Add(n1);
-                //n2.Add(ExprRel());
-                ExprRel();
-                //n1 = n2
+                n2.Add(n1);
+                n2.Add(ExprRel());
+                n1 = n2;
             }
-            //return n1;
+            return n1;
         }
         
-        public void ExprRel(){
-            //‹expr-add› <‹op-rel› ‹expr-add›>*
-            //var n1 = ExprAdd();
-            ExprAdd();
+        public Node ExprRel(){
+            //‹expr-add› (‹op-rel› ‹expr-add›)*
+            var n1 = ExprAdd();
             while (firstOfExprRel.Contains(CurrentToken)){
-                //n2 = new ExprRel();
+                var n2 = new ExprRel();
                 switch (CurrentToken){
                     case TokenCategory.LESS:
-                        //n2.AnchorToken = Expect(TokenCategory.LESS);
-                        Expect(TokenCategory.LESS);
+                        n2.AnchorToken = Expect(TokenCategory.LESS);
                         break;
 
                     case TokenCategory.LESSEQUAL:
-                        //n2.AnchorToken = Expect(TokenCategory.LESSEQUAL);
-                        Expect(TokenCategory.LESSEQUAL);
+                        n2.AnchorToken = Expect(TokenCategory.LESSEQUAL);
                         break;
 
                     case TokenCategory.GREATER:
-                        //n2.AnchorToken = Expect(TokenCategory.GREATER);
-                        Expect(TokenCategory.GREATER);
+                        n2.AnchorToken = Expect(TokenCategory.GREATER);
                         break;
 
                     case TokenCategory.GREATEREQUAL:
-                        //n2.AnchorToken = Expect(TokenCategory.GREATEREQUAL);
-                        Expect(TokenCategory.GREATEREQUAL);
+                        n2.AnchorToken = Expect(TokenCategory.GREATEREQUAL);
                         break;
 
                     default:
                         throw new SyntaxError(firstOfExprRel,tokenStream.Current);
                 }
-                //n2.Add(n1);
-                //n2.Add(ExprAdd());
-                ExprAdd();
-                //n1 = n2
-                
+                n2.Add(n1);
+                n2.Add(ExprAdd());
+                n1 = n2;
             }
-            //return n1;
+            return n1;
         }
         
-        public void ExprAdd(){
+        public Node ExprAdd(){
             //‹expr-mul› < ‹op-add› ‹expr-mul› >*
-            //var n1 = ExprMul();
-            ExprMul();
+            var n1 = ExprMul();
             while (CurrentToken == TokenCategory.PLUS || CurrentToken == TokenCategory.MINUS){
-                //n2 = new ExprMul();
+                var n2 = new ExprAdd();
                 if(CurrentToken == TokenCategory.MINUS){
-                    Expect(TokenCategory.MINUS);    
+                    n2.AnchorToken = Expect(TokenCategory.MINUS);    
+                }else{
+                    n2.AnchorToken = Expect(TokenCategory.PLUS);
                 }
-                else{
-                    Expect(TokenCategory.PLUS);
-                }
-                //n2.Add(n1);
-                //n2.Add(ExprMul());
-                ExprMul();
-                //n1 = n2
+                n2.Add(n1);
+                n2.Add(ExprMul());
+                n1 = n2;
             }
-            //return n1;
+            return n1;
         }
         
-        public void ExprMul(){
-            //var n1 = ExprUnary();
-            ExprUnary();
+        public Node ExprMul(){
+            var n1 = ExprUnary();
             while (firstOfExprMul.Contains(CurrentToken)){
-                //n2 = new ExprMul();
+                var n2 = new ExprMul();
                 switch (CurrentToken){
                     case TokenCategory.MULTIPLICATION:
-                        //n2.AnchorToken = Expect(TokenCategory.MULTIPLICATION);
-                        Expect(TokenCategory.MULTIPLICATION);
+                        n2.AnchorToken = Expect(TokenCategory.MULTIPLICATION);
                         break;
 
                     case TokenCategory.MODULO:
-                        //n2.AnchorToken = Expect(TokenCategory.MODULO);
-                        Expect(TokenCategory.MODULO);
+                        n2.AnchorToken = Expect(TokenCategory.MODULO);
                         break;
 
                     case TokenCategory.DIVIDE:
-                        //n2.AnchorToken = Expect(TokenCategory.DIVIDE);
-                        Expect(TokenCategory.DIVIDE);
+                        n2.AnchorToken = Expect(TokenCategory.DIVIDE);
                         break;
 
                     default:
                         throw new SyntaxError(firstOfExprMul,tokenStream.Current);
                 }
-                //n2.Add(n1);
-                //n2.Add(ExprUnary());
-                ExprUnary();
-                //n1 = n2
-                
+                n2.Add(n1);
+                n2.Add(ExprUnary());
+                n1 = n2;
             }
-            //return n1;
-            
+            return n1;
         }
         
-        public void ExprUnary(){
+        public Node ExprUnary(){
             //< ‹op-unary› >* ‹expr-primary›
-            //var top = new ExprUnary();
-            //var temp = top; //reference _magic_ 
+            var top = new ExprUnary();
+            var temp = top; //reference _magic_ 
              if (firstOfExprUnary.Contains(CurrentToken)){
                 while (firstOfExprUnary.Contains(CurrentToken)){
                     switch (CurrentToken){
                         case TokenCategory.PLUS:
-                            //temp.AnchorToken = Expect(TokenCategory.PLUS);
-                            Expect(TokenCategory.PLUS);
+                            temp.AnchorToken = Expect(TokenCategory.PLUS);
                             break;
 
                         case TokenCategory.MINUS:
-                            //temp.AnchorToken = Expect(TokenCategory.MINUS);
-                            Expect(TokenCategory.MINUS);
+                            temp.AnchorToken = Expect(TokenCategory.MINUS);
                             break;
 
                         case TokenCategory.NOT:
-                            //temp.AnchorToken = Expect(TokenCategory.NOT);
-                            Expect(TokenCategory.NOT);
+                            temp.AnchorToken = Expect(TokenCategory.NOT);
                             break;
 
                         default:
                             throw new SyntaxError(firstOfExprUnary,tokenStream.Current);
                     }
-                    //var newNode = new ExprUnary(); //ToBeReplacedPrimary or next Unary
-                    ExprUnary();
-                    //temp.Add(newNode);
-                    //temp = newNode;
+                    if (!firstOfExprUnary.Contains(CurrentToken)){
+                        temp.Add(ExprPrimary());
+                    }else{
+                        var newNode = new ExprUnary(); //ToBeReplacedPrimary or next Unary
+                        temp.Add(newNode);
+                        temp = newNode;
+                    }
+                    
                 }
+                
             }
             else{
-                //temp = ExprPrimary(); //replace the invisible current node for the real Primary
-                ExprPrimary();
+                return ExprPrimary(); //replace the invisible current node for the real Primary
             }
-            
-            //return top; //Always return the head
+            return top; //Always return the head
         }
         
-        public void ExprPrimary(){
+        public Node ExprPrimary(){
             //‹id› | ‹fun-call› | ‹array› | ‹lit› | (‹expr›)
-            
             switch (CurrentToken){
-                case TokenCategory.IDENTIFIER:
-                    //var n = new ExprPrimary(){
-                    //AnchorToken = Expect(TokenCategory.IDENTIFIER)
-                    Expect(TokenCategory.IDENTIFIER);
-                    //}
+                case TokenCategory.IDENTIFIER: //var or fun-call
+                    var idToken = Expect(TokenCategory.IDENTIFIER);
                     if (CurrentToken == TokenCategory.OPENEDPAR){
                         Expect(TokenCategory.OPENEDPAR);
-                        //n.Add(FunCall());
-                        ExprList();
+                        var fun = new FunCall(){
+                                AnchorToken = idToken
+                        };
+                        if(CurrentToken != TokenCategory.CLOSEDPAR){
+                            fun.Add(ExprList());   
+                        }
                         Expect(TokenCategory.CLOSEDPAR);
+                        return fun;
+                    }else{
+                        var id =  new Identifier(){
+                            AnchorToken = idToken
+                        };
+                        return id;
                     }
-                    //return n;
-                    break;
-                case TokenCategory.OPENEDBRACKET:
-                    Expect(TokenCategory.OPENEDBRACKET);
-                    //var n = new ExprPrimary(){
-                        ExprList();
-                    //}
-                    Expect(TokenCategory.CLOSEDBRACKET);
-                    //return n;
-                    break;
+                case TokenCategory.OPENEDBRACKET: //array
+                    return Arr();
 
-                case TokenCategory.OPENEDPAR:
+                case TokenCategory.OPENEDPAR: //(expr)
                     Expect(TokenCategory.OPENEDPAR);
-                    //var n = new ExprPrimary(){
-                        Expr();
-                    //}
+                    var n = Expr();
                     Expect(TokenCategory.CLOSEDPAR);
-                    //return n;
-                    break;
+                    return n;
+                    
                 case TokenCategory.STRING:
-                    Expect(TokenCategory.STRING);
-                    break;
+                    return new Str(){
+                        AnchorToken = Expect(TokenCategory.STRING)
+                    };
     
                 case TokenCategory.CHAR:
-                    Expect(TokenCategory.CHAR);
-                    break;
+                    return new Char(){
+                        AnchorToken = Expect(TokenCategory.CHAR)
+                    };
     
                 case TokenCategory.INTLITERAL:
-                    Expect(TokenCategory.INTLITERAL);
-                    break;
+                    return new IntLiteral(){
+                        AnchorToken = Expect(TokenCategory.INTLITERAL)
+                    };
                     
                 default:
                     throw new SyntaxError(firstOfExprPrimary,tokenStream.Current);
             }
         }
         
-        public void ExprList(){
-             if (firstOfExpr.Contains(CurrentToken)){
-                Expr();
-                while (CurrentToken == TokenCategory.COMMA){
-                    Expect(TokenCategory.COMMA);
-                    //n.Add(Expr());
-                    Expr();
-                }
+        public Node Arr(){
+            var n = new Arr();
+            Expect(TokenCategory.OPENEDBRACKET);
+            if(CurrentToken != TokenCategory.CLOSEDBRACKET){
+                n.Add(ExprList());
             }
-            
-            //Borre ExprListCont //(‹expr› (,‹expr›)*)?
-            /*
-            var n = new ExprListCont()
-            while(Current == TokenCategory.COMMA){
-                Expect(TokenCategory.COMMA);
-                n.Add(Expr());
-            }
+            Expect(TokenCategory.CLOSEDBRACKET);
             return n;
-            */
         }
+    
     }
 }

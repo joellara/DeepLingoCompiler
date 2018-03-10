@@ -1,6 +1,10 @@
 /*
-  Buttercup compiler - Parent Node class for the AST (Abstract Syntax Tree).
-  Copyright (C) 2013 Ariel Ortiz, ITESM CEM
+  DeepLingo compiler - Parent Node class for the AST (Abstract Syntax Tree).
+    Esteban Gil Martinez        A01375048
+    Javier Esponda Hernández    A01374645
+    Joel Lara Quintana          A01374649
+
+  Copyright (C) 2018, Error 404 NullPointeException, ITESM CEM
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,9 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 namespace DeepLingo {
-
     class Node: IEnumerable<Node> {
-
         IList<Node> children = new List<Node>();
 
         public Node this[int index] {
