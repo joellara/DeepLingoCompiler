@@ -79,8 +79,8 @@ namespace DeepLingo {
                 
                 var parser = new Parser(new Scanner(input).Start().GetEnumerator());
                 var program  = parser.Program();
-                Console.WriteLine("Syntax OK.");
-                
+                Console.WriteLine("===== Syntax OK =====");
+                Console.WriteLine("===== AST Tree =====");
                 Console.Write(program.ToStringTree());
                 
             } catch (FileNotFoundException e) {
