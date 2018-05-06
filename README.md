@@ -1,8 +1,8 @@
 DeepLingo compiler, version 0.3
 
-Esteban Gil Martinez        A01375048
-Javier Esponda Hernández    A01374645
-Joel Lara Quintana          A01374649
+Esteban Gil Martinez        A01375048  
+Javier Esponda Hernández    A01374645  
+Joel Lara Quintana          A01374649  
 
 Copyright (C) 2018, Error 404 NullPointeException, ITESM CEM
 ===============================
@@ -16,17 +16,28 @@ Included in this release:
     * Lexical analysis
     * Syntactic analysis
     * AST construction
+    * Semantic analysis
+    * Intermidiate code generation
     
-To build, at the terminal type:
-
+## Building Deep Lingo
+### To build the program, at the terminal type:  
+    
     make
-   
-To run, type:
 
-    ./deepLingo.exe <file_name>
+### To build the library
+
+    make deeplingolib.dll
+    
+### To build a program
+
+    python deepc test_programs/<file_name>
+    
+## To run a program, type:
+
+    mono <file_name>.exe
     
 Where <file_name> is the name of a DeepLingo source file. You can try with
 these files:
 
-   * ultimate.deep
-   * literals.deep
+   * ultimate
+   * literals
