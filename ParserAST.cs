@@ -36,26 +36,22 @@ namespace DeepLingo {
             TokenCategory.RETURN,
             TokenCategory.SEMICOLON
         };
-        
         static readonly ISet<TokenCategory> firstOfExprRel = new HashSet<TokenCategory>(){
             TokenCategory.LESS,
             TokenCategory.LESSEQUAL,
             TokenCategory.GREATER,
             TokenCategory.GREATEREQUAL
         };
-        
         static readonly ISet<TokenCategory> firstOfExprMul = new HashSet<TokenCategory>(){
             TokenCategory.MULTIPLICATION,
             TokenCategory.MODULO,
             TokenCategory.DIVIDE
         };
-        
         static readonly ISet<TokenCategory> firstOfExprUnary = new HashSet<TokenCategory>(){
             TokenCategory.PLUS,
             TokenCategory.MINUS,
             TokenCategory.NOT
         };
-        
         static readonly ISet<TokenCategory> firstOfExprPrimary = new HashSet<TokenCategory>(){
             TokenCategory.IDENTIFIER,
             TokenCategory.OPENEDBRACKET,
@@ -64,7 +60,7 @@ namespace DeepLingo {
             TokenCategory.INTLITERAL,
             TokenCategory.OPENEDPAR
         };
-        
+        /*
         static readonly ISet<TokenCategory> firstOfExpr = new HashSet<TokenCategory>(){ 
             TokenCategory.IDENTIFIER,
             TokenCategory.OPENEDBRACKET,
@@ -85,18 +81,15 @@ namespace DeepLingo {
             TokenCategory.NOTEQUALS,
             TokenCategory.EQUALS
         };
-        
+        */
         IEnumerator<Token> tokenStream;
-        
         public Parser(IEnumerator<Token> tokenStream) {
             this.tokenStream = tokenStream;
             this.tokenStream.MoveNext();
         }
-
         public TokenCategory CurrentToken {
             get { return tokenStream.Current.Category; }
         }
-
         public Token Expect(TokenCategory category) {
             if (CurrentToken == category) {
                 Token current = tokenStream.Current;
@@ -107,14 +100,15 @@ namespace DeepLingo {
                 throw new SyntaxError(category, tokenStream.Current);                
             }
         }
-        
+
         public Node Program(){ 
             // <def>*
             var n = new Program();
             while(CurrentToken != TokenCategory.EOF){
                 if(CurrentToken == TokenCategory.VAR){
                     n.Add(VarDef());
-                }else{
+                }
+                else{
                     n.Add(FunDef());
                 }
             }
@@ -135,6 +129,9 @@ namespace DeepLingo {
         public Node IdList(){
             //‹id› (,‹id›)*
             var n = new IdList();
+            if(CurrentToken == TokenCategory.CLOSEDPAR){
+                return n;
+            }
             n.Add(new Identifier(){
                 AnchorToken = Expect(TokenCategory.IDENTIFIER)
             });
@@ -153,18 +150,28 @@ namespace DeepLingo {
                 AnchorToken = Expect(TokenCategory.IDENTIFIER)
             };
             Expect(TokenCategory.OPENEDPAR);
-            if(CurrentToken != TokenCategory.CLOSEDPAR){
-                n.Add(IdList());   
-            }
+            //if(CurrentToken != TokenCategory.CLOSEDPAR){
+            n.Add(IdList());   
+            //}
             Expect(TokenCategory.CLOSEDPAR);
             Expect(TokenCategory.OPENEDCURLY);
+            
+            //while(CurrentToken == TokenCategory.VAR){
+                //n.Add(VarDef());
+            //}
+            n.Add(VarDefList());
+            //if(firstOfStmt.Contains(CurrentToken)){
+                n.Add(StmtList());
+            //}
+            Expect(TokenCategory.CLOSEDCURLY);
+            return n;
+        }
+        
+        public Node VarDefList(){
+            var n = new VarDefList();
             while(CurrentToken == TokenCategory.VAR){
                 n.Add(VarDef());
             }
-            if(firstOfStmt.Contains(CurrentToken)){
-                n.Add(StmtList());
-            }
-            Expect(TokenCategory.CLOSEDCURLY);
             return n;
         }
         
@@ -184,7 +191,6 @@ namespace DeepLingo {
             }
             return n;
         }
-        
         public Node Else(){
             var n = new Else();
             if (CurrentToken == TokenCategory.ELSE){
@@ -197,16 +203,17 @@ namespace DeepLingo {
             }
             return n;
         }
-        
         public Node StmtList(){
             //<stmt>*
             var n = new StmtList();
+            if(CurrentToken == TokenCategory.CLOSEDCURLY){
+                return n;
+            }
             while (firstOfStmt.Contains(CurrentToken)){
                 n.Add(Stmt());
             }
             return n;
         }
-        
         public Node If(){
             var n = new If();
             Expect(TokenCategory.IF);
@@ -214,19 +221,18 @@ namespace DeepLingo {
             n.Add(Expr());
             Expect(TokenCategory.CLOSEDPAR);
             Expect(TokenCategory.OPENEDCURLY);
-            if(CurrentToken != TokenCategory.CLOSEDCURLY){
+            //if(CurrentToken != TokenCategory.CLOSEDCURLY){
                 n.Add(StmtList());
-            }
+            //}
             Expect(TokenCategory.CLOSEDCURLY);
-            if(CurrentToken == TokenCategory.ELSEIF){
+            //if(CurrentToken == TokenCategory.ELSEIF){
                 n.Add(ElseIf());    
-            }
-            if(CurrentToken == TokenCategory.ELSE){
+            //}
+            //if(CurrentToken == TokenCategory.ELSE){
                 n.Add(Else());
-            }
+            //}
             return n;
         }
-        
         public Node Loop(){
             var n  = new Loop(){
                 AnchorToken = Expect(TokenCategory.LOOP)
@@ -284,9 +290,9 @@ namespace DeepLingo {
                             var fun = new FunCall(){
                                 AnchorToken = idToken
                             };
-                            if(CurrentToken != TokenCategory.CLOSEDPAR){
-                                fun.Add(ExprList());   
-                            }
+                            //if(CurrentToken != TokenCategory.CLOSEDPAR){
+                            fun.Add(ExprList());   
+                            //}
                             Expect(TokenCategory.CLOSEDPAR);
                             Expect(TokenCategory.SEMICOLON);
                             return fun;
@@ -321,6 +327,9 @@ namespace DeepLingo {
         
         public Node ExprList(){
             var n = new ExprList();
+            if(CurrentToken == TokenCategory.CLOSEDPAR || CurrentToken == TokenCategory.CLOSEDBRACKET){
+                return n;
+            }
             n.Add(Expr());
             while (CurrentToken == TokenCategory.COMMA){
                 Expect(TokenCategory.COMMA);
@@ -497,14 +506,13 @@ namespace DeepLingo {
                     if (CurrentToken == TokenCategory.OPENEDPAR){
                         Expect(TokenCategory.OPENEDPAR);
                         var fun = new FunCall(){
-                                AnchorToken = idToken
+                            AnchorToken = idToken
                         };
-                        if(CurrentToken != TokenCategory.CLOSEDPAR){
-                            fun.Add(ExprList());   
-                        }
+                        fun.Add(ExprList());
                         Expect(TokenCategory.CLOSEDPAR);
                         return fun;
-                    }else{
+                    }
+                    else{
                         var id =  new Identifier(){
                             AnchorToken = idToken
                         };
@@ -542,9 +550,7 @@ namespace DeepLingo {
         public Node Arr(){
             var n = new Arr();
             Expect(TokenCategory.OPENEDBRACKET);
-            if(CurrentToken != TokenCategory.CLOSEDBRACKET){
-                n.Add(ExprList());
-            }
+            n.Add(ExprList());
             Expect(TokenCategory.CLOSEDBRACKET);
             return n;
         }

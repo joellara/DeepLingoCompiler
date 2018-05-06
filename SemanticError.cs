@@ -1,5 +1,5 @@
 /*
-  Buttercup compiler - Semantic error exception class.
+  DeepLingo compiler - Semantic error exception class.
   
     Esteban Gil Martinez        A01375048
     Javier Esponda Hernández    A01374645
@@ -27,6 +27,9 @@ namespace DeepLingo {
     class SemanticError: Exception {
         public SemanticError(string message, Token token):
             base(String.Format("Semantic Error: {0} \n" +"at row {1}, column {2}.",message,token.Row,token.Column)){
+        }
+        public SemanticError(string message):
+            base(String.Format("Semantic Error: {0} \n",message)){
         }
     }
 }

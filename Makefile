@@ -17,12 +17,21 @@
 #  
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-deepLingo.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs Parser.cs \
-	SyntaxError.cs Node.cs SpecificNodes.cs
+#all: deeplingo.exe deeplingo.dll
+
+deepLingo.exe: Driver.cs Scanner.cs Token.cs TokenCategory.cs ParserAST.cs \
+	SyntaxError.cs Node.cs SpecificNodes.cs SemanticAnalyzer.cs \
+	SemanticError.cs SymbolTable.cs FunctionTable.cs CILGenerator.cs
 	mcs -out:deepLingo.exe Driver.cs Scanner.cs Token.cs TokenCategory.cs \
-	ParserAST.cs SyntaxError.cs Node.cs SpecificNodes.cs
-			
+	ParserAST.cs SyntaxError.cs Node.cs SpecificNodes.cs SemanticAnalyzer.cs \
+	SemanticError.cs SymbolTable.cs CILGenerator.cs FunctionTable.cs
+
+deeplingolib.dll: deeplingolib.cs 
+	mcs /t:library deeplingolib.cs
+        
 clean:
-	rm deepLingo.exe
+	rm deepLingo.exe deeplingolib.dll
+
+			
+

@@ -25,102 +25,46 @@ using System.Collections.Generic;
 
 namespace DeepLingo {
     class SemanticAnalyzer {
-        //-----------------------------------------------------------
-        static readonly IDictionary<TokenCategory, Type> typeMapper =
-            new Dictionary<TokenCategory, Type>() {
-                { TokenCategory.BOOL, Type.BOOL },
-                { TokenCategory.INT, Type.INT }                
-            };
-
-        //-----------------------------------------------------------
-        public SymbolTable Table {
-            get;
-            private set;
-        }
-
+        public SymbolTable Global_Symbol_Table;
+        public FunctionTable Global_Function_Table;
+        public SymbolTable currentNamespaceTable;
+        public IDictionary<string, SymbolTable> localSymbolTables = new SortedDictionary<string, SymbolTable>();
+        public bool firstPass;
+        public bool insideFunction;
+        public int insideLoop;
+        
         //-----------------------------------------------------------
         public SemanticAnalyzer() {
-            Table = new SymbolTable();
+            Global_Symbol_Table      = new SymbolTable();
+            Global_Function_Table    = new FunctionTable();
+            currentNamespaceTable    = new SymbolTable();
+            firstPass                = true;
+            insideFunction           = false;
+            insideLoop               = 0;
+            
+            /* System predefined functions*/
+            Global_Function_Table["add"] = 2;
+            Global_Function_Table["get"] = 2;
+            Global_Function_Table["new"] = 1;
+            Global_Function_Table["printc"] = 1;
+            Global_Function_Table["printi"] = 1;
+            Global_Function_Table["println"] = 0;
+            Global_Function_Table["prints"] = 1;
+            Global_Function_Table["readi"] = 0;
+            Global_Function_Table["reads"] = 0;
+            Global_Function_Table["set"] = 3;
+            Global_Function_Table["size"] = 1;
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(Program node) {
-            Visit((dynamic) node[0]);
-            Visit((dynamic) node[1]);
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(DeclarationList node) {
+        
+        public void Visit(Program node){
             VisitChildren(node);
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Declaration node) {
-            var variableName = node[0].AnchorToken.Lexeme;
-            if (Table.Contains(variableName)) {
-                throw new SemanticError("Duplicated variable: " + variableName,node[0].AnchorToken);
-            } 
-            else {
-                Table[variableName] = typeMapper[node.AnchorToken.Category];              
+            if(!Global_Function_Table.Contains("main")){
+                throw new SemanticError("No main function declared");
             }
-
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(StatementList node) {
+            firstPass = false;
             VisitChildren(node);
-            return Type.VOID;
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(Assignment node) {
-            var variableName = node.AnchorToken.Lexeme;
-            if (Table.Contains(variableName)) {
-                var expectedType = Table[variableName];
-                if (expectedType != Visit((dynamic) node[0])) {
-                    throw new SemanticError("Expecting type " + expectedType + " in assignment statement",node.AnchorToken);
-                }
-            } 
-            else {
-                throw new SemanticError("Undeclared variable: " + variableName,node.AnchorToken);
-            }
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Print node) {
-            node.ExpressionType = Visit((dynamic) node[0]);
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(If node) {
-            if (Visit((dynamic) node[0]) != Type.BOOL) {
-                throw new SemanticError(
-                    "Expecting type " + Type.BOOL 
-                    + " in conditional statement",                   
-                    node.AnchorToken);
-            }
-            VisitChildren(node[1]);
-            return Type.VOID;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Identifier node) {
-            var variableName = node.AnchorToken.Lexeme;
-
-            if (Table.Contains(variableName)) {
-                return Table[variableName];
-            }
-
-            throw new SemanticError("Undeclared variable: " + variableName,node.AnchorToken);
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(IntLiteral node) {
+        public void Visit(IntLiteral node){
             var intStr = node.AnchorToken.Lexeme;
             try {
                 Convert.ToInt32(intStr);
@@ -128,63 +72,180 @@ namespace DeepLingo {
             catch (OverflowException) {
                 throw new SemanticError("Integer literal too large: " + intStr, node.AnchorToken);
             }
-            return Type.INT;
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(True node) {
-            return Type.BOOL;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(False node) {
-            return Type.BOOL;
-        }
-
-        //-----------------------------------------------------------
-        public Type Visit(Neg node) {          
-            if (Visit((dynamic) node[0]) != Type.INT) {
-                throw new SemanticError("Operator - requires an operand of type " + Type.INT,node.AnchorToken);
+        public void Visit(Identifier node){
+            var variableName = node.AnchorToken.Lexeme;
+            if (!currentNamespaceTable.Contains(variableName) && !Global_Symbol_Table.Contains(variableName)) {
+                throw new SemanticError("No defined variable: " + variableName,node.AnchorToken);
             }
-            return Type.INT;
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(And node) {
-            VisitBinaryOperator('&', node, Type.BOOL);
-            return Type.BOOL;
+        public void Visit(Arr node){
+            VisitChildren(node);
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(Less node) {
-            VisitBinaryOperator('<', node, Type.INT);
-            return Type.BOOL;
+        public void Visit(Char node){
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(Plus node) {
-            VisitBinaryOperator('+', node, Type.INT);
-            return Type.INT;
+        public void Visit(VarDefList node){
+            VisitChildren(node);
         }
-
-        //-----------------------------------------------------------
-        public Type Visit(Mul node) {
-            VisitBinaryOperator('*', node, Type.INT);
-            return Type.INT;
+        public void Visit(VarDef node){
+            foreach (var n in node[0]) {
+                var variableName = n.AnchorToken.Lexeme;
+                if(insideFunction){
+                    if(currentNamespaceTable.Contains(variableName)){
+                        throw new SemanticError("Duplicated variable: " + variableName,n.AnchorToken);
+                    }
+                    currentNamespaceTable.Add(variableName);
+                }
+                else{
+                    if (firstPass){
+                        if(Global_Symbol_Table.Contains(variableName)){
+                            throw new SemanticError("Duplicated variable: " + variableName,n.AnchorToken);    
+                        } 
+                        else{
+                            Global_Symbol_Table.Add(variableName);
+                        }
+                    }
+                }
+                
+                VisitChildren(n);
+            }
+            
         }
-
-        //-----------------------------------------------------------
+        public void Visit(IdList node){
+            if(!firstPass){
+                foreach(var n in node){
+                    var variableName = n.AnchorToken.Lexeme;
+                    if(currentNamespaceTable.Contains(variableName)){
+                        throw new SemanticError("Duplicated variable: " + variableName,node[0].AnchorToken);
+                    }
+                    else{
+                        currentNamespaceTable.Add(variableName);
+                    }
+                    VisitChildren(n);
+                }
+            }
+        }
+        public void Visit(FunDef node){
+            var functionName = node.AnchorToken.Lexeme;
+            if(firstPass){
+                if(Global_Function_Table.Contains(functionName)){
+                    throw new SemanticError("Duplicated function: " + functionName,node.AnchorToken);    
+                }
+                else{
+                    if(node[0] is IdList){
+                        var t = 0; 
+                        foreach (var n in node[0]){t++;}
+                        Global_Function_Table[functionName] = t;              
+                    }
+                    else{
+                        Global_Function_Table[functionName] = 0;                  
+                    }
+                }
+            }
+            else{
+                currentNamespaceTable = new SymbolTable();
+                insideFunction = true;
+                VisitChildren(node);
+                localSymbolTables[functionName] = currentNamespaceTable;
+                insideFunction = false;
+                currentNamespaceTable = new SymbolTable();
+            }
+        }
+        public void Visit(Assignment node){
+            var varName = node.AnchorToken.Lexeme;
+            if(!currentNamespaceTable.Contains(varName) && !Global_Symbol_Table.Contains(varName)){
+                throw new SemanticError("Undeclared variable: " + varName,node[0].AnchorToken);    
+            }
+            VisitChildren(node);
+        }
+        public void Visit(FunCall node){
+            var varName = node.AnchorToken.Lexeme;
+            if(!Global_Function_Table.Contains(varName)){
+                throw new SemanticError("Undeclared function: " + varName,node.AnchorToken);    
+            }
+            else{
+                var t = 0;
+                foreach (var n in node[0]){t++;}
+                if(t != Global_Function_Table[varName]){
+                    throw new SemanticError("Function called with different parameters as defined ",node.AnchorToken);    
+                }
+                VisitChildren(node);
+            }
+        }
+        public void Visit(StmtList node){
+            VisitChildren(node);
+        }
+        public void Visit(Def node){
+            VisitChildren(node);
+        }
+        public void Visit(If node){
+            VisitChildren(node);
+        }
+        public void Visit(ElseIfList node){
+            VisitChildren(node);
+        }
+        public void Visit(ElseIf node){
+            VisitChildren(node);
+        }
+        public void Visit(Else node){
+            VisitChildren(node);
+        }
+        public void Visit(Loop node){
+            insideLoop++;
+            VisitChildren(node);
+            insideLoop--;
+        }
+        public void Visit(Return node){
+            VisitChildren(node);
+        }
+        public void Visit(Increment node){
+            VisitChildren(node);
+        }
+        public void Visit(Decrement node){
+            VisitChildren(node);
+        }
+        public void Visit(Stmt node){
+            if(node.AnchorToken.Category == TokenCategory.BREAK && insideLoop == 0){
+                throw new SemanticError("Found Break outside loop declaration",node.AnchorToken);
+            }
+            VisitChildren(node);
+        }
+        public void Visit(ExprList node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprOr node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprAnd node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprAdd node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprComp node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprRel node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprMul node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprUnary node){
+            VisitChildren(node);
+        }
+        public void Visit(ExprPrimary node){
+            VisitChildren(node);
+        }
+        public void Visit(Str node) {
+            VisitChildren(node);
+        }
+    
         void VisitChildren(Node node) {
             foreach (var n in node) {
                 Visit((dynamic) n);
             }
         }
-
-        //-----------------------------------------------------------
-        void VisitBinaryOperator(char op, Node node, Type type) {
-            if (Visit((dynamic) node[0]) != type || Visit((dynamic) node[1]) != type) {
-                throw new SemanticError(String.Format("Operator {0} requires two operands of type {1}",op, type),node.AnchorToken);
-            }
-        }
+        
     }
 }

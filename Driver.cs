@@ -1,4 +1,6 @@
 /*
+    VERSION 0.4 DONE
+    
     Esteban Gil Martinez        A01375048
     Javier Esponda Hernández    A01374645
     Joel Lara Quintana          A01374649
@@ -28,13 +30,15 @@ using System.Text;
 namespace DeepLingo {
 
     public class Driver {
-        const string VERSION = "0.3";
+        const string VERSION = "0.5";
 
         //-----------------------------------------------------------
         static readonly string[] ReleaseIncludes = {
             "Lexical analysis",
             "Syntactic analysis",
-            "AST construction"
+            "AST construction",
+            "Semantic analysis",
+            "CIL code generation"
         };
 
         //-----------------------------------------------------------
@@ -62,31 +66,83 @@ namespace DeepLingo {
             PrintReleaseIncludes();
             Console.WriteLine();
 
-            if (args.Length != 1) {
-                Console.Error.WriteLine("Please specify the name of the input file.");
+            if (args.Length != 2) {
+                Console.Error.WriteLine("Please specify the name of the input and output files.");
                 Environment.Exit(1);
             }
 
             try {            
-                var inputPath = args[0];                
+                var inputPath = args[0];              
+                var outputPath = args[1];
                 var input = File.ReadAllText(inputPath);
+                /*Lexical Analysis START*/
+                    Console.WriteLine("****** Lexical Analysis ******");
+                    Console.WriteLine(String.Format("===== Tokens Identification"));
+                    Console.WriteLine(String.Format("===== Tokens from: \"{0}\" =====", inputPath));
+                    var count = 1;
+                    foreach (var tok in new Scanner(input).Start()) {
+                        Console.WriteLine(String.Format("[{0}] {1}", count++, tok));
+                    }
+                /*Lexical Analysis END*/
                 
-                Console.WriteLine(String.Format("===== Tokens from: \"{0}\" =====", inputPath));
-                var count = 1;
-                foreach (var tok in new Scanner(input).Start()) {
-                    Console.WriteLine(String.Format("[{0}] {1}", count++, tok));
+                /*Syntactic Analysis START*/
+                    Console.WriteLine("****** Syntactic Analysis ******");
+                    var parser = new Parser(new Scanner(input).Start().GetEnumerator());
+                    var program  = parser.Program();
+                    Console.WriteLine("===== Syntax OK =====");
+                /*Syntactic Analysis END*/
+                
+                /*AST construction START*/
+                    Console.WriteLine("===================");
+                    Console.WriteLine("===== AST Tree =====");
+                    Console.Write(program.ToStringTree());
+                /*AST construction END*/
+                
+                /*Semantic analysis START*/
+                Console.WriteLine("===================");
+                var semantic = new SemanticAnalyzer();
+                semantic.Visit((dynamic) program);
+
+                Console.WriteLine("Semantics OK.");
+                Console.WriteLine();
+                Console.WriteLine("Global Symbol Table");
+                Console.WriteLine("============");
+                foreach (var entry in semantic.Global_Symbol_Table) {
+                    Console.WriteLine(entry);                        
+                }
+                Console.WriteLine("============");
+                Console.WriteLine("Global Function Table");
+                Console.WriteLine("============");
+                foreach (var entry in semantic.Global_Function_Table) {
+                    Console.WriteLine(entry);                        
                 }
                 
-                var parser = new Parser(new Scanner(input).Start().GetEnumerator());
-                var program  = parser.Program();
-                Console.WriteLine("===== Syntax OK =====");
-                Console.WriteLine("===== AST Tree =====");
-                Console.Write(program.ToStringTree());
+                Console.WriteLine("============");
+                Console.WriteLine("Local Symbol Tables");
+                foreach (var entry in semantic.localSymbolTables) {
+                    Console.WriteLine("");
+                    Console.WriteLine(entry);
+                }
                 
-            } catch (FileNotFoundException e) {
-                Console.Error.WriteLine(e.Message);
-                Environment.Exit(1);
-            }                
+                /*Semantic analysis END*/
+                
+                /* CIL Code Generation START*/
+                Console.WriteLine("============");
+                
+                var codeGenerator = new CILGenerator();
+                File.WriteAllText(outputPath,codeGenerator.Visit((dynamic) program));
+                Console.WriteLine("Generated CIL code to '" + outputPath + "'.");Console.WriteLine();
+                
+                /* CIL Code Generation END*/
+                
+            } 
+            catch (Exception e) {
+                if (e is FileNotFoundException || e is SyntaxError || e is SemanticError) {
+                    Console.Error.WriteLine(e.Message);
+                    Environment.Exit(1);
+                }
+                throw;
+            }             
         }
 
         //-----------------------------------------------------------

@@ -1,17 +1,12 @@
 /* File: ultimate.deep
  * Prints the answer to the ultimate question of life, the
  * universe, and everything.
- * (C) 2018     
-    Esteban Gil Martinez        A01375048
-    Javier Esponda Hernández    A01374645
-    Joel Lara Quintana          A01374649
-
-  Copyright (C) 2018, Error 404 NullPointeException, ITESM CEM, ITESM CEM
+ * (C) 2018 Ariel Ortiz, ITESM CEM
  */
 
 main() {
     prints("The answer to the ultimate question of life, ");
     prints("the universe, and everything: ");
-    printi(!0,2);
+    printi(!0);
     println();
 }

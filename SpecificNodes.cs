@@ -20,16 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-namespace DeepLingo {    
+namespace DeepLingo {   
     
-    /*
-    class Print: Node {
-        // This property is set during semantic analysis and read during code generation.
-        public Type ExpressionType {
-            get; set;
-        }
-    }
-    */
+    class VarDefList: Node{}
     
     class Arr: Node{}
     class Program: Node {}
